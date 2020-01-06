@@ -1,0 +1,100 @@
+*Recall 살짝.. KNN 배웠던거 mention하고. Linear Classifier. image를 하나의 long vector로 stretch 한 후에 가중치를 곱해서 만든다. 
+
+그렇다면 어떻게 W를 고르는가? 
+-바로 Loss function을 사용한다. 현재 classifier의 성능을 얘기해주는 것. 정답값과 predict값의 차이를 구해서 그 차이가 적을 수록 더 정답값과 가깝다고 생각.
+
+*SVM의 오차함수는 hinge loss 
+-L = max(0, incorrect score-correct score + 1)를 전체 데이터 셋에 대해서 평균 구한 것. 
+
+Q1. 만약 차의 이미지를 살짝 바꾼다면 loss는 어떻게 될까? 여기서는 차의 correct score이 훨씬 크기 때문에 still get a zero loss. 
+
+Q2. what is the minimum loss: 0 , maximum loss: infinity
+
+Q3. 일반적으로 weight는 매우 작은 값으로 초기화 한다. 그러면 W이 0에 가깝다면 loss는 뭐가 될까? number of classes - 1 이 될 것. 왜냐면 시그마(0 - 0 + 1) 의 평균이니까.....이건 useful debugging strategy. 최초의 학습을 시작할 때 loss값이 이 규칙에 맞는지 확인하면 학습이 제대로 할 수 있을지 볼 수 있으니까..(sanity check라고 한다) 
+
+Q4. what if the sum was over all classes? end up finding the same 
+
+Q5. mean을 사용한다면? 바뀌지 않는다. 우리는 true value를 사용하는게 아니라 value끼리 비교분석하는 것이기 때문이다. 
+
+Q6. square score를 사용한다면? non-linear이기 때문에 다른 loss function이 된다. badness가 squared되기 때문에 엄청 값이 커지기 때문이다. it's way of quantifying the errors. 
+
+
+*코드: margins[y] = 0 . 올바른 class에 대한 값은 0로 처리한다. to ignore the y-th position and only consider margin on max wrong class. 우리가 for loop 돌려서 각 class의 loss를 구하는 것인데 올바른 class값의 loss는 어차피 1이 되므로 그건 그냥 없애주는 것이다. 우리가 바라는 것은 잘못된 class의 loss값이기 때문이다. 
+
+**문제! weight가 unique한 값이 아니다! weight값의 배수도 loss가 0이 되게 만든다. 
+-> 이 문제는 왜냐하면 Training Data Loss 만을 고려했기 때문이다. 하지만 머신러닝의 목표는 test data에 대해서 잘 분류하는 것이다. Training data에 대해서만 잘 분류하는 건 overfitting의 문제가 일어날 수 있따. 
+->이걸 고치기 위해 Regularization을 사용한다. 이 모델이 simpler한 가중치를 고르게 만드는 것. lambda는 regularization strength로 또 다른 hyperparameter가 된다. 
+ "Occam's Razor" : 가설 중에 가장 simplest한게 최고다. 
+
+ Data loss와 Regularization loss를 더 한 값이 진정한 Loss가 된다. 결국 data에도 가장 fit하고 또 가장 적은 값을 구하는 게 목표가 된다. 
+
+**Regularization의 종류
+1) L2 Regularization: euclidian 을 사용해서 0에 가까우면서 가장 고른 분포를 이룬 가중치를 택함. 왜냐면 모든 class를 염두해두는게 좋으니까...diffuse over every class. 
+2) L1 Regularization: w1을 더 좋아할 것. 왜냐면 complexity를 측정하는 방법이 벡터 내 0이 몇 개나 있냐 이걸로 측정하니까. 
+3) Elastic net : L1과 L2의 mixture. 
+
+
+*Softmax Classifier (Multinomial Logistic Regression) 
+: 이항에 대한 logistic regression을 다차원으로 일반화한 것이다. 
+딥러닝 모델을 학습시키기 위해서는 Maximum Likelihood estimation 기법이라는 것을 쓰는데 입력값 X와 가중치가 주어졌을 때 정답값 Y가 나타낼 확률.. 이게 최대화하는 weight를 찾는 것. (학습 데이터 자체의 분포와 모델이 예측한 결과값의 분포 차이, 즉 크로스 엔트로피를 최소화하는 것) 
+여기서 하고자 하는 것은 정확한 클래스의 마이너스 log의 확률을 최대화하는 것.  로그를 취하는 이유는 수학적으로 나이스하기 때문이다. 
+우리가 SVM에서 측정하고자 했던 것은 correct class가 incorrect class 의 score보다 크냐 작냐 그거였다. 점수 자체에는 별로 신경쓰지 않았음. 이런 문제를 해결하기 위한게 softmax classifier. 
+ 여기서 오차는 - log of the propability of the true class  
+
+**Example
+ exponentional 다음 합이 1이 되도록 normalization하고 log 붙여서 loss를 구함. 
+
+**최대값과 최소값은 어떻게 될 것인가? min loss는 0, max loss는 infinity가 된다. 로그니까 0과 1사이 score임. 아주 잘 맞추면 확률이 1에 가까우니까 loss는 0이고 아주 형편없으면 loss가 무한대가 될 것이다. 
+
+**W가 0에 가깝다면 loss는 뭐가 될 것인가? -log (1/num of class) 가 될 것. 이것도 sanity check용으로 확인 가능할 것이다. 
+
+
+===SoftMax vs. SVM===
+Q. 데이터를 가지고 있고 데이터를 약간씩 변형해주면 양쪽 loss에 대해 어떤 변화가 일어날 것인가? 
+- SVM은 loss값이 불변하고, softmax는 모든 인자를 고려하기 때문에 변화하게 됨. 
+- 즉, SVM은 둔감해서 값이 변해도 변화하지 않고 softmax는 민감하기 때문에 변화한다. 
+
+
+====Optimization ====
+loss를 minimize하는 과정이라고 할 수 있다. 산으로 비유하자면 가장 낮은 지대를 찾는 것. 
+
+가장 stupiest 한 건 Strategy #1. weight를 랜덤으로 전부 다 해서 그 중 젤 정확도 높은거 고르는 것.. 
+
+Strategy #2: Follow the Slope. 방향만 알아도 work well. 경사를 따라 내려감. 
+-1차원의 경우 함수를 미분한 것이 될 것. 이걸 수치적으로 경사를 구하니까 numerical gradient라고 함. 
+-이렇게 계산을 해서 미분을 하면 정확한 값이 아니라 근사치이다. 또한 매우 느리다. 
+  =>Silly. loss는 기본적으로 weight의 function이기 때문에 미분만 알면 쉽게 구할 수 있는 것이다. 미분을 통해 gradient를 구하는 방식을 analytic Gradient라고 한다. 
+
+*Analytic Gradient는 exact, fast, 그치만 error가 일어날 수 있다. 
+
+**Gradient Descent: 
+-gradient 값만큼 weight를 줄여줘야 하니까 마이너스가 붙인다. step_size는 learning rate임. 음의 gradient 방향으로 최적화해주는 게 gradient descent. 
+
+**Mini-batch Gradient Descent
+:gradient를 갱신할 때 사용하는 데이터 갯수가 batch임. mini batch는 전체 데이터 중 일부를 갱신하는데 쓴다. 노이즈가 많이 발생하지만 overfitting을 방지하는 역할을 한다. 
+
+**Learning rate
+-LR이 높으면 loss가 최저점으로 가지 못하고 너무 적으면 시간이 많이 소요된다. LR을 잘 설정하면 빠른 시간 내에 loss가 최소화된다. Lr은 대표적인 hyperparameter. 처음에는 LR을 높게 하다가 차차 줄여나가는 방식이 decay방식이다. 
+
+=========================
+Image Features: 전통적인 방식으로는 먼저 이미지의 feature를 추출한 다음 linear classify를 했다. feature추출 방식은 Color Histogram, SIFT 등 여러가지가 있다... 하지만 현대에 와서는 feature extraction을 따로 하지않고도 머신러닝으로 자동으로 추출할 수 있는 방식을 택하고 있다. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

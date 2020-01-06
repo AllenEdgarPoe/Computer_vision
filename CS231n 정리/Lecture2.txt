@@ -1,0 +1,52 @@
+**Image Classification
+*K-Nearest Negihbors. 
+: Take majority vote for K closest points. 일종의 투표제로 주변 점과의 거리를 구해서 가장 가까운 K개의 label중 과반을 차지 하는 것이 label이 된다. 
+
+*거리를 구하는 방법? 
+1) L1(Manhattan) distance: 
+2) L2(Euclidean) distance: L1을 square root 한 버전. 왜 이렇게 하냐면 L1은 coordinate axis에 더 종속적이다. 
+-서로 다른 distance 방법을 택하면 어떻게 될까? 
+http://vision.stanford.edu/teaching/cs231n-demos/knn/
+이 사이트 들어가면 knn데모를 체험해볼 수 있다. Decision boundary가 어떻게 distance metrics에 다라 달라지는지 체험할 수 있다. 
+->L2 distance가 더 outlier를 잘 검출한다. 왜냐면 제곱으로 인해 큰 건 더 증폭하는 효과가 있기 때문이다. 또한 backpropagation에 사용할 때 미분하기 더 용이하다. 
+
+*Hyperparameters
+-k를 몇 개로 택해야 하는가? distance metrics는 뭘로 해야하지? 
+=> 전부 다 problem-dependent하다. must try them all. 
+data의 coordinate axis에 따라서 달라진다. 
+
+Idea #1: K=1일 경우 O(1)이니까 안됨
+Idea #2: Split data into train and test, choose hyperparemeters that work best on test data. 
+ ->Bad: no idea how algorithm will perform on new data
+Idea #3: Split into Train, val, and test: choose hyperparameters on val and evaluate on test. 
+Idea #4: Cross-Validation : 데이터셋이 적을 때 사용하는 방식으로 트레이닝 데이터를 5개로 쪼갠다음 for loop돌려서 하나씩 validation data로 택하는 방식이다. 
+
+**KNN never used on images
+왜? 1) 이미지 간 차이를 L2나 L1으로는 detect할 수 없다. 예를 들어 color hue를 다르게 했을 때, 혹은 이미지가 오염되었을 때 전부 다 same L2 distance를 가지게 된다. 
+2) Curse of dimensionality 차원의 저주: 차원이 늘어날 수록 기하급수적으로 트레이닝 점도 늘어난다.  
+
+===Linear Classification====
+W 가중치 + bias 
+어떤 이미지가 있으면 이것을 하나의 긴 column vector화 시키고 이 벡터의 전치 벡터의 사이즈를 가진 w를 곱해서 bias를 더한다. 
+
+문제점: one template에 대한 것만 train이 가능하다. 예를 들어 말의 측면, 차의 정면 이런식으로밖에 트레이닝이 안된다... 만약 여러 템플릿을 가진 데이터라면 제대로 트레이닝 할 수가 없다. 
+
+또한 linear classifier는 원형으로 분리된 문제 같은 건 separate할 수 없다. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
