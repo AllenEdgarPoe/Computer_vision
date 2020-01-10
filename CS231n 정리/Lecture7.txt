@@ -1,0 +1,149 @@
+====Training Neural Networks=======
+*Optimization : Problems with SGD
+ -what if loss changes quickly in one direction and slowly in another? What does gradient descent do? 
+ : SGD를 사용하면 지그재그로 될 것. minima 에 대해서 back and forth 로 지그재그로 갈 것이다. 
+ 파라미터가 엄청 많을 테니까 갈 수 있는 direction도 엄청 많으니까 매우 큰 문제이다. 
+
+ 또 다른 문제는 Local Minima, or Saddle point. 
+ - curvy objective function, and have valley in the middle. 여기서는 SGD가 stuck하게 될 것이다. 
+ saddle point에서 완만한 slope의 경우 gradient가 0이 되므로 학습을 멈추게 된다. 고차원의 neural network경우 saddle point가 문제가 훨씬 많이 되었다. 
+ 또 near saddle point를 보면 gradient가 0은 아니지만 정말 작기 때문에 학습 하는데 매우 느릴 것이다.
+
+ -또 다른 문제는 noise다. N이 whole training set 이라면 million으로 엄청 클 것이기에 연산량이 매우 클 것이다. 만약 noise가 있다면 minima로 가는데 매우 길 시간이 걸릴 것이다. 
+
+
+**그렇다면 fancier optimization방법은 뭐가 있을까?
+-SGD + Momentum : minor variance가 있는데 이건 가속도를 붙여주는 방법이다. gradient를 건들이지 않고 잘 학습시키는 방법. 모멘텀을 사용한다면 지그재그 하는 것도 줄어들 것이고 noise에서도 평균을 구하는 방식으로 되기 때문에 줄어든다. 
+
+ -SGD에서는 x의 위치를 직접 업데이트 해준다. 하지만 모멘텀에서는 v라는 변수가 들어와서 v 속도를 업데이트 해주고 x의 위치를 v를 통해 업데이트 해준다. 마치 언덕에서 공을 굴리는 느낌.....rho는 마찰 계수(0.5, 0.9 같은 단일 수치)라서 v에 따라 점점 더 속도가 줄어드는 효과를 준다. 예를 들어 완만한 곳에서는 점점 속도가 천천히 될 것이고 slope가 가파른 곳에서는 빠르게 될 것. 결과적으로는 미니멈에 훨씬 더 빠르게 global minima를 찾아가게 된다. 
+
+*Nesterov Momentum update
+: 모멘텀보다 더 빠름. 
+ 모멘텀은 rho와 속도를 곱해준 부분과 lr과 gradient를 곱한 부분으로 나뉘어져 있다. 그래서 실제로는 둘의 중간으로 방향이 정해진다. 
+
+ 그치만 Nesterov momentum update는 gradient step을 계산하기 전에 momentum step을 먼저 계산해서 gradient의 시작점을 모멘텀 스텝 종료점으로 변경을 한 후 gradient step을 evaluate한다. 
+
+근데 이게 불편한 점이 있따. theta와 그 위치에서의 gradient를 구하게 되는 건데 theta와 다른 위치에서의 gradient를 구해야한다. 그래서 일반적인 optimization과의 호환성이 떨어지는 문제점이 있다. 
+ 그 문제를 해결하기 위해 phi를 도입한다. 그래서 좀 더 vanilla update (보기 좋은 형태로 업데이트) 할 수 있음. 
+
+**AdaGrad update
+- grad_squared 라는 개념이 도입됨. gradient를 grad_squared에 루트를 씌여준 것으로 나눠준다. e에 -7승은 0으로 나뉘는 것을 방지하는 용이다. parameter vector와 동일한 사이즈를 가지는 거대한 벡터... per-parameter adaptive learning rate method. 모든 파라미터가 동일한 learning rate를 받는 것이 아니라 캐쉬가 build up하는 것이니까 
+
+-수직축은 gradient가 크니까 cache값이 커짐. 그러면 x의 update속도가 낮아진다. 반대로 수평축은 gradient가 작으니까 update 속도가 커진다. 그래서 equalize해주는 effect를 준다. 
+
+-그치만 얘도 문제점이 있다. step size가 시간에 따라 어떻게 될까? cache값은 계속 building up이 되면서 증가하게 될 것이고 그렇게 되면 결국 learning rate가 0에 가까운 값이 되버린다. 그러면 학습이 종료됨.. 
+
+그래서 학습이 종료되지 않기 위한 에너지를 제공하기 위한게 바로 RMSProp 이다. 
+
+**RMSProp 
+-decay rate라는 개념을 도입함. 이건 하이퍼 파라미터로 0.9나 0.99로 설정. 캐쉬의 값이 서서히 leaking하는 장치를 더해준 것이다. 
+-이는 coursera의 강의에서 처음 말했음 ㅋㅋ그래서 논문에서 인용할 때도 coursera강의에서 말했다 이런 식으로 함. 
+
+**Adam update (incomplete, but close)
+-RMSProp 과 모멘텀을 결합한 형태이다. 완벽하진 않다. 
+-RMSProp에서 dx는 현재 그라디언트, first moment는 전 단계의 gradient의 decay하는 sum을 구해준 것. 베타 1 베타2 이런건 하이퍼 파라미터인데 0.9 쓴다. 
+
+-bias correction이 추가됨. 이건 최초의 first moment와 second moment가 0으로 초기화되었을때 이걸 좀 더 scaling up해주는 역할이다. 
+
+
+Q. 저 모델들 모두 learning rate를 하이퍼파라미터로 삼는데 which one of these learning rates is best to use? 
+뭐가 최선일까? 어떤 것도 최선은 아니다. 왜냐면 learning rate는 시간에 따라 decay하는게 낫다. 그 값을 작게 만들면서 적용시키는게 최선이다. 
+1) step decay: epoch 돌때마다 learning rate을 일정 비율로 감소시켜줌. 
+2) exponential decay: 제일 많이 사용됨. 
+3) 1/t decay 
+
+최근 추이는 Adam을 많이 쓴다. 
+
+
+loss function을 구하는데 gradient만 사용하는 것을 1st order method라고 한다. 
+
+*Second order Optimization methods 
+-Hessian을 통해 공변이 어떻게 구성되어있는지 아는 것. 그러면 학습 할 필요 없이 바로 minima로 갈 수 있다. Hessian을 도입하게 되면 장점은 당연히 convergence가 매우 빠르다, 그리고 learning rate와 같은 하이퍼파라미터가 필요가 없다. 
+-그치만 매우 딥한 뉴럴넷에서는 거의 불가능하다. 왜냐면 엄청나게 큰 행렬이 되는데 게다가 이걸 inverse해야 한다. 그래서 실질적으로 불가능함... 
+-그래도 다른 걸 써서 이걸 한 번 사용해보자는 게 있고 BGFS가 있다. 여기서는 Hassian을 invert하는 대신에 그의 rank1을 inverse하자는 것. 그래도 연산이 커서 제대로 동작하기 힘들다. 
+
+
+*L-BFGS : 
+full batch일때는 잘 동작하고 미니 배치에서는 잘 동작하지 않는다. 
+
+*정리를 하자면, 대부분은 Adam을 쓰고 만약에 full batch를 쓸 수 있따면 L-BFGS도 써도 된다. 
+
+
+===============Ensemblees==========
+단일 모델을 학습시키는 대신 복수개의 독립적인 모델을 학습시킨다. 그리고 test time때 이들의 결과의 평균을 내준다. 그렇게 하면 성능이 2%정도 향상한다. 거의 항상 좋은 결과를 낸다는 것이고 이렇게 간단한 방법으로 향상시키는 것은 대단한것... 물론 단점도 있다. training시의 여러 모델을 해줘야 하기 때문에 관리할 게 많고 또 그만큼 테스트 양이 많아져서 linear하게 테스트 하는 시간이 많아진다. 
+
+*Fun Tips/Tricks: 
+ - 단일 모델 내에서 한 번 epoch를 돌 때마다 checkpoint를 생성한다. 그 checkpoint들 간에 앙상블을 하더라도 성능 향상을 볼 수 있다. 
+ - 파라미터 벡터들 간의 앙상블도 성능 향상을 가져온다. 가장 아랫 줄에 x_test를 도입해서 이전에 가지고 있던 x_test에 0.99를 곱해주고 이제 도입하는 x에 0.005를 곱해줌. 이렇게 해도 성능 향상을 가져온다. 이 bowl function이 있을 때 step size가 커서 지나치는 경우가 있는데 이 step을 다 average를 하게 되면 minima에 가장 가까운 값을 얻을 수 있다. 
+
+*Regularization (Dropout) 
+: 매우 간단하면서 항상 성능을 높이는데 역할을 해서 중요하다. 최근에는 batch normalization을 쓰면 dropout을 안 쓴다고 한다. 
+
+-dropout이라는 개념은 일반적으로 지금까지 봤던 모든 노드들 간에 연결이 아니라 일부 뉴런을 0으로 설정한다는 것. 연결이 끊긴 거나 마찬가지. 
+
+-forward에 적용되었던 dropout이 backward에도 적용이 된다. 그래서 gradient가 죽어버리는 일이 벌어짐.. 어떤 loss function에 영향을 주지 못하겠지? 그래서 업데이트가 되지 않는다. 
+
+*How could this possible be a good idea?
+-network가 중복성을 가질 수 있기 때문이다. redundancy를 가진다. 
+-이것도 하나의 앙상블이라고도 본다. 동일한 파라미터를 공유하는 각각의 모델로 본다는 것이다. 
+
+*Test Time때는 어떨 것인가? 
+-Ideally: 이미 dropout을 여러 번 랜덤하게 하면서 노이즈를 많이 만들었다. 이것을 통합해주고 싶다. want to integrate out all the noise. 
+-Monte Carlo Approximation:  이거는 결국 test 때도 dropout을 그대로 활용하자, 그래서 각각의 드롭아웃에 대해 평균낸 것으로 예측을 하자는 것. 그치만 매우 비효율적인 좋지 않은 방법이 됨. 
+-그 대신 테스트 되는 모든 뉴런을 킨다.. (dropout 사용하지 않는다) 단, 유이해야 할 사항이 있다. 우리가 test time때 X라는 output을 얻었다고 생각하자. training time 때는 우리가 얻을 수 있는 결과값의 기대치가 어떻게 되는 것인가? (1,0) (0,1), (1,1), (0,0) 이렇게 4가지 케이스가 나오니까 1/4....로 계산해주면 1/2이 된다. 그래서 p = 0.5를 사용하게 되면 트레이닝 때 사용했던 activation 때보다 2배가 더 inflation되는 그런 결과를 test때 얻게 된다는 것. 사실은 처음에 dropout을 제안하고 시도 했을 때 잘 안 됐다고 한다.. 바로 test time 때 training time 때만큼 scaling을 해줘야 하는 것! 
+
+
+**정리 
+- test 때는 training 때의 기대치 만큼 scaling을 해줘야 한다. 그래서 *p를 해줘야 한다. 
+- 보다 현실적으로는 dropout 보다 "inverted dropout" 사용함. test 타임은 그대로 두고 대신에 training time 때 나누기 p를 해준다. 즉 미리 스케일링을 처리해주는 것. 이게 보다 일반적인 방법이 된다. 
+
+===========================
+*Convolutional Neural Networks 
+-본격적으로 활용되기 시작한 것은 LeNet-5 
+
+
+
+===================================
+!예지언니 설명 내용!
+
+Momentum, Nestrov는 gradient의 방향을 설정하는 거고 
+AdaGrad, RMSprop은 learning rate를 조정하는 방식이고 
+Adam은 그 둘을 통합한 것이라고 이해하면 쉽다. 
+
+Momentum은 가속도라는 개념이 붙어서(velocity) 원래 gradient 방향에 더 힘을 가해주는 것. 스텝을 계산해서 움직인 다음에 아까 내려오던 관성 방향으로 또 가자는 것. 
+
+Nesterov같은 경우 마찰계수가 붙음. 일단 관성 방향으로 먼저 움직이고 움직인 자리에서 스텝을 계산하면 더 빠르다. 
+
+AdaGrad는 gradient squared라는 개념이 붙음. 안 가본 곳은 빠르고 큰 step size로 훓고 가본 곳은 갈 수록 step size를 줄여서 면밀히 탐색한다. 현재 그래디언트를 g.s로 나눠주게 되는데 그러면 그래디언트가 큰 값에서는 minima가 나올 확률이 높으니까 천천히 학습하게 될 것이고 반면 그래디언트가 작은 값에서는 step size를 크게 해서 학습시킨다. 하지만 g.s값은 누적되므로 나중에 매우 커지기 때문에 그래디언트가 0이 되서 학습이 종료되는 문제점이 발생한다. 
+
+RMSprop같은 경우 decay rate를 도입하였다. 이전 그래디언트 값*p + (1-p) *현재 그래디어트 이렇게 계산해서 예전 그래디언트 도 고려한다는 것이다. p는 0.01 값으로 보통 하는데 p값이 작을 수록 최신 기울기를 더 크게 반영한다. 
+
+Adam은 제일 많이 사용하는 optimization방법이다. Momentum + AdaGrad라고 생각하면 된다. 근데 베타1, 베타2 값을 도입해서 모멘텀과 g.s.가 0이 되는걸 방지해준다. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
