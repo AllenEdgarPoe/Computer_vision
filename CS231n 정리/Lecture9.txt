@@ -1,0 +1,31 @@
+*Transfer Learning: 현존하는 모델을 fine tuning하는 것이 더 좋음. 비교적 작은 데이터 셋에 대해서는 마지막 부분만 바꾸고 큰 데이터 셋은 뒷쪽 FC부분을 바꿔주면 된다. 그래서 전부 바꿔주지 않아도 쉽게 모델을 구축할 수 있을 것.. 
+이 방법은 실제로 CNN에서 많이 사용하게 된다. CNN pretrained 된 벡터들 사용하는 경우가 많다. 하지만 꼭 필요한 과정은 아니다. 
+
+"Model Zoo" 에 있는 모델들 fine tuning 해라!
+
+**CNN Architecture
+1. LeNet-5
+2. Alex Net : 2012년에 우승한 모델. input은 227*227*3. 첫 번째 레이어 통과시키면 55*55*96, 그 다음 맥스 풀링. output은 27*27*96. 이런식으로 차원 계산 가능... Norm Layers를 썼는데 현재는 사용하지 않는 방법. dropout 0.5, SGD+momentum 0.9. 
+옛날에는 GPU 성능이 안 좋았기 때문에 반으로 쪼개서 적절히 계산했음. 
+3. ZFNet : 알렉스넷의 stride등을 바꿔서 성능을 높임
+4. VGGnet: 매우 깊은 층. filter는 3*3으로 작게 만듬. 큰 메모리를 차지하는 단점이 있음. 
+5. GoogLeNet: 22개의 층으로 이루어진 깊은 모델. inception이라는 새로운 개념이 들어가는데 layer를 병렬적으로 계산하는 것. 
+ -연산량을 줄이는 방법: bottleneck layers. 1*1 짜리 filter를 붙여서 차원을 낮춘다. 
+ - Auxiliary classification 을 붙여서 backpropagation 때 vanishing gradient 문제를 줄여준다. 
+6. ResNet: CNN을 무조건 깊게 만드니까 training에서도 최적화가 힘들어져서 error율이 높았다. (overfitting이 아니였음..!!)  skipconnection을 추가해서 만듬. 
+ -Residual은 예측값과 실제값의 차이를 의미한다. 타겟과 input의 차이 (F(x)) 만 학습하겠다는 것. F(x)가 0이되는 방향으로 학습하기에 특징을 뽑아내기도 수월하다함... 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
